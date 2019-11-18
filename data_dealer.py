@@ -168,13 +168,13 @@ class DataDealer(DataReader):
                     # print(data[max_i][max_y][max_x][index])
             label_batch.append(label)
             bbox_batch.append(bbox)
-        img_batch = numpy.array(img_batch)
-        label_batch = numpy.array(label_batch)
-        bbox_batch = numpy.array(bbox_batch)
+        # img_batch = numpy.array(img_batch)
+        # label_batch = numpy.array(label_batch)
+        # bbox_batch = numpy.array(bbox_batch)
         return img_batch,label_batch,bbox_batch
 
     @staticmethod
-    def chooseClassficationData(view,num = 128):
+    def chooseClassficationData(view,num = 64):
         """
         view:前景分类
         num:返回数据矩阵个数
@@ -184,12 +184,12 @@ class DataDealer(DataReader):
         for i in range(len(view)):
             for y in range(len(view[i])):
                 for x in range(len(view[i][y])): 
-                    if len(data) >= 128:
+                    if len(data) >= num:
                         return data
                     # 若为前景
                     if view[i][y][x] == 1:
                         data.append([i,y,x])
-        while len(data) < 128:
+        while len(data) < num:
             i = random.randint(0,len(view)-1)
             data.append([i,random.randint(0,len(view[i])-1),random.randint(0,len(view[i][0])-1)])
         return data

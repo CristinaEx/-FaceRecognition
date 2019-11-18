@@ -1,7 +1,7 @@
-K = 1
+K = 3
 # 网络放缩系数
-NET_SCALE = 16
-# 3种滑窗比例，因为RESNET101不算最后一层池化层后，映射为1:32，将最大池化步长改为1后，映射为1:16
+NET_SCALE = 8
+# 3种滑窗比例，因为RESNET101不算最后一层池化层后，映射为1:32，将最大池化步长改为1后，映射为1:8
 ANTHORS_TYPE_NUM = 3
 ANTHORS_TYPIES = [] # ANTHORS_TYPIES[NUM][0] -> 宽
 for i in range(ANTHORS_TYPE_NUM):
