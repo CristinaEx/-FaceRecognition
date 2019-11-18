@@ -448,7 +448,7 @@ def resnet_v3(inputs,
           # Appendix of [2].
           with arg_scope(
               [layers_lib.conv2d], activation_fn=None, normalizer_fn=None):
-            net = resnet_utils.conv2d_same(net, 64, 7, stride=1, scope='conv1')# stride used to be 2
+            net = resnet_utils.conv2d_same(net, 64, 7, stride=2, scope='conv1')
           # net = layers.max_pool2d(net, [3, 3], stride=1, scope='pool1')
         net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
         # This is needed because the pre-activation variant does not have batch

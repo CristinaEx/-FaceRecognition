@@ -166,16 +166,37 @@ class DataDealer(DataReader):
                     box1 = [max_x*NET_SCALE,max_y*NET_SCALE,ANTHORS_TYPIES[max_i][0],ANTHORS_TYPIES[max_i][1]]
                     bbox[max_i][max_y][max_x] = self.__calculateBbox(box1,self.__ellipse2Rect(anno[index]))
                     # print(data[max_i][max_y][max_x][index])
-            label_batch.append(data)
+            label_batch.append(label)
             bbox_batch.append(bbox)
         img_batch = numpy.array(img_batch)
         label_batch = numpy.array(label_batch)
         bbox_batch = numpy.array(bbox_batch)
         return img_batch,label_batch,bbox_batch
 
+    @staticmethod
+    def chooseClassficationData(view,num = 128):
+        """
+        view:前景分类
+        num:返回数据矩阵个数
+        return data
+        """
+        data = []
+        for i in range(len(view)):
+            for y in range(len(view[i])):
+                for x in range(len(view[i][y])): 
+                    if len(data) >= 128:
+                        return data
+                    # 若为前景
+                    if view[i][y][x] == 1:
+                        data.append([i,y,x])
+        while len(data) < 128:
+            i = random.randint(0,len(view)-1)
+            data.append([i,random.randint(0,len(view[i])-1),random.randint(0,len(view[i][0])-1)])
+        return data
+
 
 if __name__ == '__main__':
     dealer = DataDealer()
     img_batch,label_batch,bbox_batch = dealer.getRandomTrainBatch(10)
-    print(numpy.shape(label_batch))
-    print(numpy.shape(bbox_batch))
+    print(numpy.shape(label_batch[0][0]))
+    print(numpy.shape(bbox_batch[0][0]))
