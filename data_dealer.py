@@ -114,6 +114,8 @@ class DataDealer(DataReader):
                 height,width,mod = numpy.shape(img)
             except:
                 # 二维图像跳过
+                # 随机填充
+                img_index += self.getRandomImgIds(1)
                 continue
             # 不规范的图像跳过
             if height < MIN_TRAIN_PIC_HEIGHT or width < MIN_TRAIN_PIC_WIDTH or not mod == 3:
@@ -174,10 +176,10 @@ class DataDealer(DataReader):
         return img_batch,label_batch,bbox_batch
 
     @staticmethod
-    def chooseClassficationData(view,num = 64):
+    def chooseClassficationData(view,num = 16):
         """
         view:前景分类
-        num:返回数据矩阵个数
+        num:最少返回数据矩阵个数
         return data
         """
         data = []

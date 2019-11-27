@@ -21,15 +21,15 @@ def trainRPN(img,rpn_view):
     # RPN操作
     with tf.compat.v1.variable_scope('RPN', reuse=tf.compat.v1.AUTO_REUSE):
         weights = {
-            'rpn_1':tf.compat.v1.get_variable(name = 'w_rpn_1_1',shape = [3,3,1024,1]), # 高:宽 1:1的卷积
-            'rpn_2':tf.compat.v1.get_variable(name = 'w_rpn_1_2',shape = [3,6,1024,1]), # 高:宽 1:2的卷积
-            'rpn_3':tf.compat.v1.get_variable(name = 'w_rpn_2_1',shape = [6,3,1024,1]), # 高:宽 2:1的卷积
-            'rpn_4':tf.compat.v1.get_variable(name = 'w_rpn_2_2',shape = [6,6,1024,1]),
-            'rpn_5':tf.compat.v1.get_variable(name = 'w_rpn_2_4',shape = [6,12,1024,1]),
-            'rpn_6':tf.compat.v1.get_variable(name = 'w_rpn_4_2',shape = [12,6,1024,1]),
-            'rpn_7':tf.compat.v1.get_variable(name = 'w_rpn_4_4',shape = [12,12,1024,1]),
-            'rpn_8':tf.compat.v1.get_variable(name = 'w_rpn_4_8',shape = [12,24,1024,1]),
-            'rpn_9':tf.compat.v1.get_variable(name = 'w_rpn_8_4',shape = [24,12,1024,1])
+            'rpn_1':tf.compat.v1.get_variable(name = 'w_rpn_1_1',shape = [3,3,K*K*2,1]), # 高:宽 1:1的卷积
+            'rpn_2':tf.compat.v1.get_variable(name = 'w_rpn_1_2',shape = [3,6,K*K*2,1]), # 高:宽 1:2的卷积
+            'rpn_3':tf.compat.v1.get_variable(name = 'w_rpn_2_1',shape = [6,3,K*K*2,1]), # 高:宽 2:1的卷积
+            'rpn_4':tf.compat.v1.get_variable(name = 'w_rpn_2_2',shape = [6,6,K*K*2,1]),
+            'rpn_5':tf.compat.v1.get_variable(name = 'w_rpn_2_4',shape = [6,12,K*K*2,1]),
+            'rpn_6':tf.compat.v1.get_variable(name = 'w_rpn_4_2',shape = [12,6,K*K*2,1]),
+            'rpn_7':tf.compat.v1.get_variable(name = 'w_rpn_4_4',shape = [12,12,K*K*2,1]),
+            'rpn_8':tf.compat.v1.get_variable(name = 'w_rpn_4_8',shape = [12,24,K*K*2,1]),
+            'rpn_9':tf.compat.v1.get_variable(name = 'w_rpn_8_4',shape = [24,12,K*K*2,1])
         }
         biases = {
             'rpn_1':tf.compat.v1.get_variable(name = 'b_rpn_1_1',shape = [1,]),

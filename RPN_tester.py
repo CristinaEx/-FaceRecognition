@@ -33,15 +33,15 @@ class RPNTester:
         """
         with tf.compat.v1.variable_scope('RPN', reuse=tf.compat.v1.AUTO_REUSE):
             weights = {
-                'rpn_1':tf.compat.v1.get_variable(name = 'w_rpn_1_1',shape = [3,3,1024,1]), # 高:宽 1:1的卷积
-                'rpn_2':tf.compat.v1.get_variable(name = 'w_rpn_1_2',shape = [3,6,1024,1]), # 高:宽 1:2的卷积
-                'rpn_3':tf.compat.v1.get_variable(name = 'w_rpn_2_1',shape = [6,3,1024,1]), # 高:宽 2:1的卷积
-                'rpn_4':tf.compat.v1.get_variable(name = 'w_rpn_2_2',shape = [6,6,1024,1]),
-                'rpn_5':tf.compat.v1.get_variable(name = 'w_rpn_2_4',shape = [6,12,1024,1]),
-                'rpn_6':tf.compat.v1.get_variable(name = 'w_rpn_4_2',shape = [12,6,1024,1]),
-                'rpn_7':tf.compat.v1.get_variable(name = 'w_rpn_4_4',shape = [12,12,1024,1]),
-                'rpn_8':tf.compat.v1.get_variable(name = 'w_rpn_4_8',shape = [12,24,1024,1]),
-                'rpn_9':tf.compat.v1.get_variable(name = 'w_rpn_8_4',shape = [24,12,1024,1])
+                'rpn_1':tf.compat.v1.get_variable(name = 'w_rpn_1_1',shape = [3,3,K*K*2,1]), # 高:宽 1:1的卷积
+                'rpn_2':tf.compat.v1.get_variable(name = 'w_rpn_1_2',shape = [3,6,K*K*2,1]), # 高:宽 1:2的卷积
+                'rpn_3':tf.compat.v1.get_variable(name = 'w_rpn_2_1',shape = [6,3,K*K*2,1]), # 高:宽 2:1的卷积
+                'rpn_4':tf.compat.v1.get_variable(name = 'w_rpn_2_2',shape = [6,6,K*K*2,1]),
+                'rpn_5':tf.compat.v1.get_variable(name = 'w_rpn_2_4',shape = [6,12,K*K*2,1]),
+                'rpn_6':tf.compat.v1.get_variable(name = 'w_rpn_4_2',shape = [12,6,K*K*2,1]),
+                'rpn_7':tf.compat.v1.get_variable(name = 'w_rpn_4_4',shape = [12,12,K*K*2,1]),
+                'rpn_8':tf.compat.v1.get_variable(name = 'w_rpn_4_8',shape = [12,24,K*K*2,1]),
+                'rpn_9':tf.compat.v1.get_variable(name = 'w_rpn_8_4',shape = [24,12,K*K*2,1])
             }
             biases = {
                 'rpn_1':tf.compat.v1.get_variable(name = 'b_rpn_1_1',shape = [1,]),
@@ -71,16 +71,16 @@ class RPNTester:
         net = tf.nn.conv2d(input = net,filter = weights['down'],strides = [1, 1, 1, 1],padding = 'VALID')
         net = tf.add(net,biases['down'])
 
-        self.pred_rpn = [None]*9
-        for i in range(9):
-            r = tf.nn.conv2d(input = net,filter = weights['rpn_' + str(i+1)],strides = [1, 1, 1, 1],padding = 'VALID')
-            r = tf.reshape(r,r.get_shape().as_list()[1:-1])
-            self.pred_rpn[i] = tf.add(r,biases['rpn_' + str(i+1)])
-            self.pred_rpn[i] = tf.sigmoid(self.pred_rpn[i])
-
         # 生成feature_map
         self.feature_map = tf.nn.conv2d(input = net,filter = weights['feature'],strides = [1, 1, 1, 1],padding = 'VALID')
         self.feature_map = tf.add(self.feature_map,biases['feature'])
+
+        self.pred_rpn = [None]*9
+        for i in range(9):
+            r = tf.nn.conv2d(input = self.feature_map,filter = weights['rpn_' + str(i+1)],strides = [1, 1, 1, 1],padding = 'VALID')
+            r = tf.reshape(r,r.get_shape().as_list()[1:-1])
+            self.pred_rpn[i] = tf.add(r,biases['rpn_' + str(i+1)])
+            self.pred_rpn[i] = tf.sigmoid(self.pred_rpn[i])
 
         self.select = tf.compat.v1.placeholder(dtype = tf.float32,shape = (self.RPN_RESULT_NUM,K,K,K*K*2))
         self.pre_bbox = tf.nn.conv2d(self.select,weights['bbox'],[1,1,1,1],padding = 'VALID')
@@ -174,7 +174,7 @@ class RPNTester:
         for i in range(self.RPN_RESULT_NUM): 
             # 判断是否需要抑制
             # 重叠度>0.5的情况下抑制
-            if len(list(filter(lambda x:self.__calculateIOU(rpn_rect[i],x[0]) > 0.5,book))) > 0:
+            if len(list(filter(lambda x:self.__calculateIOU(rpn_rect[i],x) > 0.5,book))) > 0:
                 continue
 
             x,y,w,h = rpn_rect[i]
@@ -299,13 +299,13 @@ class RPNTester:
             bbox_top_list.append(bbox)
         
         # NMS非极大值抑制
-        rpn_rect = list(map(lambda x:self.__getRect(x[1]),rpn_top))
+        rpn_rect = list(map(lambda x:self.__getRect(x[1]),rpn_top_list))
 
         book = []
         for i in range(self.RPN_RESULT_NUM): 
             # 判断是否需要抑制
             # 重叠度>0.5的情况下抑制
-            if len(list(filter(lambda x:self.__calculateIOU(rpn_rect[i],x[0]) > 0.5,book))) > 0:
+            if len(list(filter(lambda x:self.__calculateIOU(rpn_rect[i],x) > 0.5,book))) > 0:
                 continue
 
             x,y,w,h = rpn_rect[i]
@@ -336,7 +336,10 @@ class RPNTester:
 if __name__ == '__main__':
     tester = RPNTester()
     tester.loadModel()
-    pic_list = ['D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_806.jpg']
+    pic_list = ['D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_806.jpg',
+    'D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_138.jpg',
+    'D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_15.jpg',
+    'D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_278.jpg']
     for pic in pic_list:
         img = Image.open(pic)
         t_ = time.time()

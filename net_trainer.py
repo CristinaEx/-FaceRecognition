@@ -38,7 +38,13 @@ class RPNTrainer:
         rate = init_learning_rate
         for i in range(round_):
             tf.compat.v1.reset_default_graph() # 重置计算图
-            ac = self.trainOne(batch_size,rate)
+            try:
+                ac = self.trainOne(batch_size,rate)
+            except:
+                print('ERROR')
+                continue
+            else:
+                pass
             for j in range(2):
                 accuracy[j].append(ac[j])
             rounds.append(i)
@@ -92,12 +98,12 @@ class RPNTrainer:
             net = tf.nn.conv2d(input = net,filter = weights['down'],strides = [1, 1, 1, 1],padding = 'VALID')
             net = tf.add(net,biases['down'])
 
-            # 训练RPN网络
-            rpn_accuracy,rpn_result = trainRPN(net,rpn_view)
-
             # 生成feature_map
             feature_map = tf.nn.conv2d(input = net,filter = weights['feature'],strides = [1, 1, 1, 1],padding = 'VALID')
             feature_map = tf.add(feature_map,biases['feature'])
+
+            # 训练RPN网络
+            rpn_accuracy,rpn_result = trainRPN(feature_map,rpn_view)
 
             # 获取选取的anchors index
             select = DataDealer.chooseClassficationData(label)
@@ -147,4 +153,4 @@ class RPNTrainer:
 
 if __name__ == '__main__':
     trainer = RPNTrainer()
-    trainer.train(round_ = 100,batch_size = 1,init_learning_rate = 0.0001,learning_rate_loss = 0.99)
+    trainer.train(round_ = 1000,batch_size = 1,init_learning_rate = 0.000001,learning_rate_loss = 0.999)
