@@ -38,6 +38,9 @@ rect = [x,y,w,h](x,y为左上角坐标)
 
 ### 算法介绍
 
+#### 流程图
+![流程图](GO.png)
+
 ```
 img = tf.constant(img,shape = (1,h,w,mod),dtype = tf.float32) # 图像原始数据
 
