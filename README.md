@@ -48,7 +48,7 @@ net, endpoints = my_resnet(img,global_pool = False,num_classes=None,is_training=
 我们进行模型搭建和使用的平台为windows10-python3.6.2-tensorflow-gpu。
 首先，我们的图像(img_batch = [batch_size,h,w,mod],batch_size为图像的数量,h为图像高度,w为图像宽度,mod为图像通道数，这里我们处理的均为RGB三色彩图，所以我们的通道数均为3)通过我们改进版的RESNET101_V2网络，传统的RESNET101_V2的网络结构如下:
 
-![resnet101](pic_result\\resnet101.jpg)
+![resnet101](resnet101.jpg)
 
 而我们的网络去掉了pool1和pool5层，使网络放缩系数从32下降到了8。这使我们的网络对于小目标更加的敏感。通过了该网络后，我们得到了卷积后的信息图:img_batch_conv = [batch_size,h/8,w/8,2048]
 
@@ -215,25 +215,25 @@ def loadModel(self,model_path = RPN_BATCH_PATH):
 
 第一张图片:
 RPN结果:
-![1RPN](pic_result\\2.PNG)
+![1RPN](2.PNG)
 经过Bounding Box回归后
-![1BBOX](pic_result\\1.PNG)
+![1BBOX](1.PNG)
 
 我们选取了一张图中的TOP5Answer，即得分最高的5个anchors，如RPN结果。
 之后采取了Bounding Box回归，得到了最终结果，如第二张图所示。
 我们可以看到RPN选取的anchors只包括了头像中的中间部分，经过Bounding Box回归之后，选取框完好的罩住了头像。
 
 RPN结果:
-![2RPN](pic_result\\4.PNG)
+![2RPN](4.PNG)
 经过Bounding Box回归后
-![2BBOX](pic_result\\3.PNG)
+![2BBOX](3.PNG)
 
 同样，RPN选取的anchors与真实框有偏移，而Bounding Box回归修补了偏移量。
 
 我们上面测试时采用Top5Answer是由于我们的网络是在个人电脑上训练的，训练次数有限且训练时长也有限，所以训练出来的模型效果还不能达到能完全识别出人脸，所以Top5Answer的机制可以显著提高识别机率，当然也会带来额外的计算量。
 
 运行速度:
-![SPEED](pic_result\\5.PNG)
+![SPEED](5.PNG)
 
 这里我们的速度在2.6s一张图左右，这也是由于我们使用的个人电脑性能不足的原因，也是由于我们在结果测试时同时进行了绘图和分析结果所带来的额外计算量。
 
