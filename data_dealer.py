@@ -199,6 +199,5 @@ class DataDealer(DataReader):
 
 if __name__ == '__main__':
     dealer = DataDealer()
-    img_batch,label_batch,bbox_batch = dealer.getRandomTrainBatch(10)
-    print(numpy.shape(label_batch[0][0]))
-    print(numpy.shape(bbox_batch[0][0]))
+    img_batch,label_batch,bbox_batch = dealer.getRandomTrainBatch(1)
+    print(numpy.shape(img_batch))

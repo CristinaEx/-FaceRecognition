@@ -8,6 +8,7 @@ def trainBbox(select,select_img,select_bbox,select_label):
     select_bbox:选择的bbox数据
     select:选取数据
     """
+    up = 10
     with tf.compat.v1.variable_scope('BBOX', reuse=tf.compat.v1.AUTO_REUSE):
         weights = {
             'bbox':tf.compat.v1.get_variable(name = 'w_bbox',shape = [K,K,K*K*2,4]) # 分类
@@ -29,7 +30,7 @@ def trainBbox(select,select_img,select_bbox,select_label):
     # 计算损失
     loss_bbox = (pre_bbox - select_bbox) * data_type 
     loss_bbox = tf.reduce_mean(loss_bbox*loss_bbox)
-    tf.compat.v1.losses.add_loss(loss_bbox) 
+    tf.compat.v1.losses.add_loss(loss_bbox*up) 
 
     # 计算准确率
     accuracy_bbox = 1 - loss_bbox

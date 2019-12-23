@@ -167,6 +167,7 @@ class RPNTester:
         img_cv = cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)  
 
         color_rect = (0,0,255)
+        color_text = (0,255,0)
         # NMS非极大值抑制
         rpn_rect = list(map(lambda x:self.__getRect(x[1]),rpn_top))
         book = []
@@ -197,6 +198,7 @@ class RPNTester:
                 continue
 
             cv2.rectangle(img_cv, (x,y), (x+w,y+h),color_rect,3)
+            cv2.putText(img_cv, str(rpn_top[i][0]), (x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, color_text,2)
             book.append([x,y,w,h])
         
         image = Image.fromarray(cv2.cvtColor(img_cv,cv2.COLOR_BGR2RGB))  
@@ -338,8 +340,8 @@ if __name__ == '__main__':
     tester.loadModel()
     pic_list = ['D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_806.jpg',
     'D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_138.jpg',
-    'D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_15.jpg',
-    'D:\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_278.jpg']
+    'D:\\\Face\\data\\originalPics\\2003\\02\\02\\big\\img_1005.jpg',
+    'D:\\\Face\\data\\originalPics\\2003\\02\\03\\big\\img_922.jpg']
     for pic in pic_list:
         img = Image.open(pic)
         t_ = time.time()

@@ -15,7 +15,26 @@
 
 ### 数据集介绍
 
-pass
+采用的数据集为FDDB数据集，该数据集图像+注释有600M左右。
+图像有各种大小和形状，主要集中在(300~600)*(300~600)的像素上。
+注:我们的训练网络不在乎训练图像的大小形状(只要长宽大于192就好)。
+其注释内容为图像中的人脸椭圆框:
+```
+[ra, rb, Θ, cx, cy, s]
+ra，rb：半长轴、半短轴
+cx, cy：椭圆中心点坐标
+Θ：长轴与水平轴夹角（头往左偏Θ为正，头往右偏Θ为负）
+s：置信度得分
+````
+通过坐标变换后我们可以得到矩形框:
+```
+w = 2*max([abs(ra*math.sin(theta)),abs(rb*math.cos(theta))])
+h = 2*max([abs(ra*math.cos(theta)),abs(rb*math.sin(theta))])
+rect = [cx-w/2,cy-h/2,w,h]
+即:
+rect = [x,y,w,h](x,y为左上角坐标)
+```
+我们以图为单位，从图中抽取128个anchors，这128个anchors包括该图中的全部正例和随机的负例。最后使用我们进行坐标变换的矩形框进行Bounding Box回归。
 
 ### 算法介绍
 
@@ -116,6 +135,107 @@ w = w' * kw
 h = h' * kh
 ```
 得到[x,y,w,h]，如果该区域与其他比它得分高的区域的IOU>0.5的情况下，该区域会被抑制(NMS非极大值抑制)。
+
+### 测试网络
+这里我们给出测试网络的初始化部分:
+```
+def loadModel(self,model_path = RPN_BATCH_PATH):
+        """
+        从model_path中加载模型
+        """
+        with tf.compat.v1.variable_scope('RPN', reuse=tf.compat.v1.AUTO_REUSE):
+            weights = {
+                'rpn_1':tf.compat.v1.get_variable(name = 'w_rpn_1_1',shape = [3,3,K*K*2,1]), # 高:宽 1:1的卷积
+                'rpn_2':tf.compat.v1.get_variable(name = 'w_rpn_1_2',shape = [3,6,K*K*2,1]), # 高:宽 1:2的卷积
+                'rpn_3':tf.compat.v1.get_variable(name = 'w_rpn_2_1',shape = [6,3,K*K*2,1]), # 高:宽 2:1的卷积
+                'rpn_4':tf.compat.v1.get_variable(name = 'w_rpn_2_2',shape = [6,6,K*K*2,1]),
+                'rpn_5':tf.compat.v1.get_variable(name = 'w_rpn_2_4',shape = [6,12,K*K*2,1]),
+                'rpn_6':tf.compat.v1.get_variable(name = 'w_rpn_4_2',shape = [12,6,K*K*2,1]),
+                'rpn_7':tf.compat.v1.get_variable(name = 'w_rpn_4_4',shape = [12,12,K*K*2,1]),
+                'rpn_8':tf.compat.v1.get_variable(name = 'w_rpn_4_8',shape = [12,24,K*K*2,1]),
+                'rpn_9':tf.compat.v1.get_variable(name = 'w_rpn_8_4',shape = [24,12,K*K*2,1])
+            }
+            biases = {
+                'rpn_1':tf.compat.v1.get_variable(name = 'b_rpn_1_1',shape = [1,]),
+                'rpn_2':tf.compat.v1.get_variable(name = 'b_rpn_1_2',shape = [1,]),
+                'rpn_3':tf.compat.v1.get_variable(name = 'b_rpn_2_1',shape = [1,]),
+                'rpn_4':tf.compat.v1.get_variable(name = 'b_rpn_2_2',shape = [1,]),
+                'rpn_5':tf.compat.v1.get_variable(name = 'b_rpn_2_4',shape = [1,]),
+                'rpn_6':tf.compat.v1.get_variable(name = 'b_rpn_4_2',shape = [1,]),
+                'rpn_7':tf.compat.v1.get_variable(name = 'b_rpn_4_4',shape = [1,]),
+                'rpn_8':tf.compat.v1.get_variable(name = 'b_rpn_4_8',shape = [1,]),
+                'rpn_9':tf.compat.v1.get_variable(name = 'b_rpn_8_4',shape = [1,])
+            }
+        with tf.compat.v1.variable_scope('BBOX', reuse=tf.compat.v1.AUTO_REUSE):
+            weights['bbox'] = tf.compat.v1.get_variable(name = 'w_bbox',shape = [K,K,K*K*2,4]) # 分类
+            biases['bbox'] = tf.compat.v1.get_variable(name = 'b_bbox',shape = [4,]) # 分类
+
+        weights['down'] = tf.compat.v1.get_variable(name = 'w_down',shape = [1,1,2048,1024])# 降采样
+        weights['feature'] = tf.compat.v1.get_variable(name = 'w_feature',shape = [1,1,1024,K*K*2])
+        biases['down'] = tf.compat.v1.get_variable(name = 'b_down',shape = [1024,]) # 降采样
+        biases['feature'] = tf.compat.v1.get_variable(name = 'b_feature',shape = [K*K*2,])
+
+        self.img = tf.compat.v1.placeholder(dtype = tf.float32,shape = (1,self.h,self.w,3))
+
+        # 使用无pool1&pool5的RESNET 101
+        net, endpoints = my_resnet(self.img,global_pool = False,num_classes=None,is_training=True,reuse = tf.compat.v1.AUTO_REUSE) # net's w&h = original_img's w&h / 16
+
+        net = tf.nn.conv2d(input = net,filter = weights['down'],strides = [1, 1, 1, 1],padding = 'VALID')
+        net = tf.add(net,biases['down'])
+
+        # 生成feature_map
+        self.feature_map = tf.nn.conv2d(input = net,filter = weights['feature'],strides = [1, 1, 1, 1],padding = 'VALID')
+        self.feature_map = tf.add(self.feature_map,biases['feature'])
+
+        self.pred_rpn = [None]*9
+        for i in range(9):
+            r = tf.nn.conv2d(input = self.feature_map,filter = weights['rpn_' + str(i+1)],strides = [1, 1, 1, 1],padding = 'VALID')
+            r = tf.reshape(r,r.get_shape().as_list()[1:-1])
+            self.pred_rpn[i] = tf.add(r,biases['rpn_' + str(i+1)])
+            self.pred_rpn[i] = tf.sigmoid(self.pred_rpn[i])
+
+        self.select = tf.compat.v1.placeholder(dtype = tf.float32,shape = (self.RPN_RESULT_NUM,K,K,K*K*2))
+        self.pre_bbox = tf.nn.conv2d(self.select,weights['bbox'],[1,1,1,1],padding = 'VALID')
+        self.pre_bbox = tf.add(self.pre_bbox,biases['bbox'])
+        self.pre_bbox = tf.reshape(self.pre_bbox,shape = (self.RPN_RESULT_NUM,4))
+
+        saver = tf.compat.v1.train.Saver(tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES))
+
+        self.sess =  tf.compat.v1.Session()
+        init = tf.compat.v1.global_variables_initializer()
+        self.sess.run(init)
+
+        saver.restore(self.sess,RPN_BATCH_PATH)
+```
+
+## 结果预览
+
+我们从测试集随机取出两张图片进行测试
+我们在测试时，需要把图像resize到合适的大小，这里选择的是192*384，得益于我们改进后的RESNET101_V2，我们的最小宽度和长度是普通网络的1/8，可以适配于我们测试集，也能适配于大多数情况。
+
+第一张图片:
+RPN结果:
+![1RPN](pic_result\\2.PNG)
+经过Bounding Box回归后
+![1BBOX](pic_result\\1.PNG)
+
+我们选取了一张图中的TOP5Answer，即得分最高的5个anchors，如RPN结果。
+之后采取了Bounding Box回归，得到了最终结果，如第二张图所示。
+我们可以看到RPN选取的anchors只包括了头像中的中间部分，经过Bounding Box回归之后，选取框完好的罩住了头像。
+
+RPN结果:
+![2RPN](pic_result\\4.PNG)
+经过Bounding Box回归后
+![2BBOX](pic_result\\3.PNG)
+
+同样，RPN选取的anchors与真实框有偏移，而Bounding Box回归修补了偏移量。
+
+我们上面测试时采用Top5Answer是由于我们的网络是在个人电脑上训练的，训练次数有限且训练时长也有限，所以训练出来的模型效果还不能达到能完全识别出人脸，所以Top5Answer的机制可以显著提高识别机率，当然也会带来额外的计算量。
+
+运行速度:
+![SPEED](pic_result\\5.PNG)
+
+这里我们的速度在2.6s一张图左右，这也是由于我们使用的个人电脑性能不足的原因，也是由于我们在结果测试时同时进行了绘图和分析结果所带来的额外计算量。
 
 ### Reference
 

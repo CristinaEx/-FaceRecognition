@@ -143,14 +143,13 @@ class RPNTrainer:
             for i in range(rounds):
                 if i == 0:
                     ac = sess.run([rpn_accuracy,bbox_accuracy])
-                sess.run(train)         
-                # print(sess.run([rpn_accuracy,bbox_accuracy,tf.compat.v1.losses.get_total_loss()]))
+                sess.run(train)      
+                print(sess.run([rpn_accuracy,bbox_accuracy,tf.compat.v1.losses.get_total_loss()]))   
             if not RESTORE:
                 os.makedirs(os.path.dirname(self.model_path))
-            saver.save(sess, self.model_path)
-            
+            saver.save(sess, self.model_path)           
         return ac
 
 if __name__ == '__main__':
     trainer = RPNTrainer()
-    trainer.train(round_ = 1000,batch_size = 1,init_learning_rate = 0.000001,learning_rate_loss = 0.999)
+    trainer.train(round_ = 1000,batch_size = 1,init_learning_rate = 0.00001,learning_rate_loss = 0.995)

@@ -31,6 +31,7 @@ class DataReader:
         返回 Img矩阵 Anno
         """
         img = Image.open(IMG_PATH + '\\' + self.imgs[index] + '.jpg')
+        # print(IMG_PATH + '\\' + self.imgs[index] + '.jpg')
         anno = self.book[self.imgs[index]]
         return numpy.array(img),anno
                 
