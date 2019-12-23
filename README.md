@@ -242,5 +242,3 @@ RPN结果:
 [1]Ross Girshick, Jeff Donahue, Trevor Darrell. Rich feature hierarchies for accurate object detection and semantic segmentation[J]. 2013.
 
 [2]Ren, Shaoqing, He, Kaiming, Girshick, Ross,等. Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks[J]. IEEE Transactions on Pattern Analysis & Machine Intelligence, 2015, 39(6):1137-1149.
-
-[3]Redmon, Joseph, Divvala, Santosh, Girshick, Ross,等. You Only Look Once: Unified, Real-Time Object Detection[J].

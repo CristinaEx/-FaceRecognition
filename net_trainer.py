@@ -93,7 +93,7 @@ class RPNTrainer:
             img = tf.constant(img,shape = (1,h,w,mod),dtype = tf.float32) # 图像原始数据
 
             # 使用无pool1&pool5的RESNET 101
-            net, endpoints = my_resnet(img,global_pool = False,num_classes=None,is_training=True,reuse = tf.compat.v1.AUTO_REUSE) # net's w&h = original_img's w&h / 16
+            net, endpoints = my_resnet(img,global_pool = False,num_classes=None,is_training=True,reuse = tf.compat.v1.AUTO_REUSE) # net's w&h = original_img's w&h / 8
 
             net = tf.nn.conv2d(input = net,filter = weights['down'],strides = [1, 1, 1, 1],padding = 'VALID')
             net = tf.add(net,biases['down'])
